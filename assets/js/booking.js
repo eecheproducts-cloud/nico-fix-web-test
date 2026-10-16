@@ -3,12 +3,12 @@
 // This file never calls gtag: no personal data goes to analytics.
 import { BOOKING_API } from './config.js';
 import { t } from './i18n.js';
-import { buildPayload, validateForm, groupDays, waLink, scaledSize } from './booking-logic.js';
+import { buildPayload, validateForm, groupDays, waLink, scaledSize, submitLabelKey, doneKey } from './booking-logic.js';
 import { checkPostcode } from './coverage.js';
 
 const getLang = () => ((document.documentElement.lang || 'es').startsWith('es') ? 'es' : 'en');
 const $ = (id) => document.getElementById(id);
-const state = { kind: 'visit', start: null, token: '', days: [], doneData: null };
+const state = { kind: 'visit', start: null, token: '', days: [], doneData: null, doneManyThings: false };
 
 // The chat link carries only a random code.
 // An inline script in reservar.html already moved it to window.__bookingToken and cleaned the URL.
@@ -23,8 +23,15 @@ function setKind(kind) {
   state.kind = kind;
   kindInputs().forEach((i) => { i.checked = i.value === kind; });
   document.querySelectorAll('.only-visit').forEach((el) => { el.hidden = kind !== 'visit'; });
-  $('submit').textContent = t(getLang(), kind === 'work' ? 'booking_submit_work' : 'booking_submit_visit');
+  updateSubmitLabel();
 }
+function updateSubmitLabel() {
+  const many = $('details').elements.manyThings.checked;
+  $('submit').textContent = t(getLang(), submitLabelKey(state.kind, many));
+  // The price box sits in the form, so it is always visible before the binding button.
+  $('price-box').textContent = t(getLang(), state.kind === 'visit' ? 'booking_price_visit' : 'booking_price_work');
+}
+$('details').elements.manyThings.addEventListener('change', updateSubmitLabel);
 kindInputs().forEach((i) => i.addEventListener('change', () => {
   setKind(i.value);
   state.start = null;
@@ -146,6 +153,7 @@ $('details').addEventListener('submit', async (e) => {
     try { data = await res.json(); } catch (err) { data = null; }
     if (res.status === 409) { msg.textContent = t(lang, 'booking_taken'); loadSlots(); return; }
     if (!data || !data.ok) { msg.textContent = t(lang, 'booking_error'); return; }
+    state.doneManyThings = form.manyThings;
     showDone(data);
   } catch (err) {
     msg.textContent = t(lang, 'booking_error');
@@ -168,7 +176,7 @@ function renderDone() {
   if (!data) return;
   const lang = getLang();
   const when = groupDays([{ date: '', slots: [{ start: data.start }] }], lang)[0];
-  const text = t(lang, state.kind === 'work' ? 'booking_done_work' : 'booking_done_visit')
+  const text = t(lang, doneKey(state.kind, state.doneManyThings))
     .replace('{when}', `${when.label}, ${when.slots[0].time}`).replace('{code}', data.code);
   const done = $('done');
   done.innerHTML = '';
@@ -176,9 +184,8 @@ function renderDone() {
   const p = document.createElement('p'); p.textContent = text;
   done.append(h, p);
   if (data.photosRejected) { const r = document.createElement('p'); r.textContent = t(lang, 'booking_photo_rejected'); done.append(r); }
-  if (data.chatNotified) {
-    const c = document.createElement('p'); c.textContent = t(lang, 'booking_done_chat'); done.append(c);
-  } else {
+  // confirmSent comes from the server; undefined counts as false.
+  if (!data.chatNotified && !data.confirmSent) {
     const a = document.createElement('a');
     a.className = 'btn btn-primary btn-glow'; a.href = waLink(data.confirmText); a.target = '_blank'; a.rel = 'noopener';
     a.textContent = t(lang, 'booking_done_button');

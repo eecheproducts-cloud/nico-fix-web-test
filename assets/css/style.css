@@ -342,6 +342,7 @@ h2::after {
   }
   .main-nav::-webkit-scrollbar { display: none; }
   .main-nav a { white-space: nowrap; }
+  .main-nav .nav-book { order: -1; }
 }
 
 /* Sections */
@@ -1123,6 +1124,7 @@ h2::after {
 .booking-check input { margin-top: 4px; accent-color: var(--orange); width: 18px; height: 18px; }
 .booking-check span > small { display: block; }
 .booking-privacy { margin: 0; font-size: 0.9rem; color: var(--muted); }
+.booking-price { margin: 0; padding: 12px 14px; border-left: 4px solid var(--orange); background: var(--white); border-radius: 8px; font-weight: 700; overflow-wrap: anywhere; }
 .booking-details .btn { justify-self: start; border: 0; cursor: pointer; font: inherit; font-weight: 700; }
 .booking-details .btn:disabled { opacity: 0.6; cursor: wait; }
 
@@ -1133,6 +1135,10 @@ h2::after {
 
 .booking-info { margin-top: 34px; padding-top: 6px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.92rem; }
 .booking-business { font-size: 0.85rem; }
+.booking-withdrawal { margin: 12px 0; }
+.booking-withdrawal summary { cursor: pointer; color: var(--text); font-weight: 600; }
+.booking-wd-form { margin-top: 10px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; }
+.booking-wd-form p { margin: 0 0 10px; overflow-wrap: anywhere; }
 
 @media (max-width: 640px) {
   .booking-kinds { grid-template-columns: 1fr; }
